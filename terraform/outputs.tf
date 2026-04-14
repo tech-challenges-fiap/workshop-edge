@@ -1,10 +1,9 @@
 output "name_prefix" {
-  description = "Prefixo padrao para recursos edge."
+  description = "Default prefix for edge resources."
   value       = local.name_prefix
 }
 
 output "auth_lambda_name" {
-  description = "Nome canonico da Lambda auth-cpf."
+  description = "Canonical name for the auth-cpf Lambda."
   value       = local.auth_lambda_name
 }
-

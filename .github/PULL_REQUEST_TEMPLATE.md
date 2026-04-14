@@ -1,13 +1,12 @@
 ## Summary
 
-Descreva a mudanca e os contratos afetados.
+Describe the change and the affected contracts.
 
 ## Checklist
 
-- [ ] respeita o ownership do repositorio
-- [ ] nao adiciona regra de negocio da aplicacao
-- [ ] atualiza documentacao local se necessario
-- [ ] validacao Terraform executada
-- [ ] testes executados
-- [ ] package das Lambdas executado
-
+- [ ] respects repository ownership
+- [ ] does not add application business logic
+- [ ] updates local documentation when needed
+- [ ] Terraform validation executed
+- [ ] tests executed
+- [ ] Lambda packaging executed
