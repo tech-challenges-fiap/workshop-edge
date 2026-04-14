@@ -1,0 +1,26 @@
+name: Bug report
+description: Reportar defeito na camada edge.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Resumo
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impacto
+      description: Liste rotas, Lambdas ou contratos externos afetados.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Como reproduzir
+    validations:
+      required: true
+

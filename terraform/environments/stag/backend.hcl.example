@@ -1,0 +1,4 @@
+bucket = "workshop-edge-stag-tfstate"
+key    = "terraform.tfstate"
+region = "us-east-1"
+
