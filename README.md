@@ -1,26 +1,25 @@
 # workshop-edge
 
-Camada de edge e integracoes serverless do projeto `workshop`.
+Edge layer and serverless integrations for the `workshop` project.
 
-## Proposito
+## Purpose
 
-Este repositorio concentra o `API Gateway`, Lambdas e contratos HTTP externos.
-Ele nao contem migrations, schema evolutivo ou regra de negocio da aplicacao.
+This repository owns the `API Gateway`, Lambdas, and external HTTP contracts.
+It does not contain migrations, evolutionary schema, or application business logic.
 
-## Stack principal
+## Main stack
 
 - Bun
 - TypeScript
 - Terraform
 - AWS Lambda
 
-## Estrategia de deploy
+## Deployment strategy
 
-- `feature/* -> stag`: Pull Request com Terraform, testes, build e package das Lambdas
-- `stag -> prod`: Pull Request de promocao para `production`
-- deploy via pipeline com OIDC para AWS
+- `feature/* -> stag`: Pull Request with Terraform, tests, build, and Lambda packaging
+- `stag -> prod`: promotion Pull Request into `production`
+- pipeline-based deployment with AWS OIDC
 
-## Documentacao local
+## Local documentation
 
 - [docs/README.md](docs/README.md)
-

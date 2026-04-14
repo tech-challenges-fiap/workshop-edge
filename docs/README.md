@@ -2,22 +2,22 @@
 
 ## Ownership
 
-- escopo: API Gateway, Lambda `auth-cpf`, Lambda `notify` e integracoes externas
-- fora do escopo: regra de negocio da aplicacao, schema evolutivo e migrations
+- scope: API Gateway, `auth-cpf` Lambda, `notify` Lambda, and external integrations
+- out of scope: application business logic, evolutionary schema, and migrations
 
-## Estrutura inicial
+## Initial structure
 
-- `src/functions/`: handlers Bun para Lambdas
-- `terraform/`: baseline de infraestrutura serverless
-- `scripts/`: lint leve e empacotamento das Lambdas
+- `src/functions/`: Bun handlers for Lambdas
+- `terraform/`: serverless infrastructure baseline
+- `scripts/`: lightweight lint and Lambda packaging
 
-## Ambientes
+## Environments
 
-- branch `stag` mapeada para GitHub environment `staging`
-- branch `prod` mapeada para GitHub environment `production`
-- naming AWS com sufixos `stag` e `prod`
+- branch `stag` maps to GitHub environment `staging`
+- branch `prod` maps to GitHub environment `production`
+- AWS naming uses `stag` and `prod` suffixes
 
-## Variaveis e secrets esperados por ambiente
+## Expected environment variables and secrets
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
@@ -26,4 +26,3 @@
 - `JWT_AUDIENCE`
 - `DATADOG_API_KEY`
 - `DATADOG_APP_KEY`
-
