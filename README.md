@@ -1,25 +1,59 @@
 # workshop-edge
 
-Edge layer and serverless integrations for the `workshop` project.
+`workshop-edge` owns the edge delivery layer for the `workshop` platform split.
+It is the future home for API Gateway integration, Lambda entrypoints, and
+other external-facing adapters that should stay outside the core application
+repository.
 
-## Purpose
+## What This Repository Owns
 
-This repository owns the `API Gateway`, Lambdas, and external HTTP contracts.
-It does not contain migrations, evolutionary schema, or application business logic.
+- edge-focused Lambda handlers
+- external request/response adapter behavior
+- Terraform baseline for edge infrastructure naming
+- Lambda packaging and edge-specific CI validation
 
-## Main stack
+This repository does not own application domain logic, database provisioning,
+or shared platform infrastructure.
 
-- Bun
-- TypeScript
-- Terraform
-- AWS Lambda
+## Current Scaffold Status
 
-## Deployment strategy
+The current scaffold provides a small but runnable baseline:
 
-- `feature/* -> stag`: Pull Request with Terraform, tests, build, and Lambda packaging
-- `stag -> prod`: promotion Pull Request into `production`
-- pipeline-based deployment with AWS OIDC
+- Lambda source files in `src/functions/`
+- an `auth-cpf` bootstrap handler
+- a `notify` bootstrap handler
+- Bun-based lint, test, build, and packaging commands
+- Terraform naming and environment baseline for the edge stack
+- generated build output in `dist/` and packaged artifacts in `artifacts/`
 
-## Local documentation
+The repository does not yet implement a full API Gateway stack or production
+integration flow. It currently defines the shape and ownership of edge concerns.
 
-- [docs/README.md](docs/README.md)
+## Local Commands
+
+```bash
+bun install
+bun run lint
+bun test
+bun run build
+bun run package:lambdas
+cd terraform
+terraform fmt -check -recursive
+terraform init -backend=false
+terraform validate
+terraform plan -var="environment=stag" -var="repo=edge"
+```
+
+## Delivery Flow
+
+- `feature/* -> stag`: Pull Request validated by Terraform checks plus Lambda lint, tests, build, and packaging
+- `stag -> prod`: promotion Pull Request allowed only from `stag`
+- `push` to `stag` or `prod`: deployment workflow uses AWS OIDC, builds/packages Lambdas, and runs Terraform planning
+- `prod` Pull Requests: drift-report and promotion-source workflows enforce branch discipline
+
+## Documentation
+
+- [docs/README.md](docs/README.md) - docs index and reading guide
+- [docs/architecture.md](docs/architecture.md) - repository boundaries and target edge role
+- [docs/development.md](docs/development.md) - local workflow, validation, and documentation rules
+- [AGENTS.md](AGENTS.md) - instructions for AI contributors
