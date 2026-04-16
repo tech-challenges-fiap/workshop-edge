@@ -1,28 +1,26 @@
 # workshop-edge docs
 
-## Ownership
+This directory explains how `workshop-edge` should be developed and maintained
+as a standalone edge and serverless integration repository.
 
-- scope: API Gateway, `auth-cpf` Lambda, `notify` Lambda, and external integrations
-- out of scope: application business logic, evolutionary schema, and migrations
+## Read This First
 
-## Initial structure
+- Start with [../README.md](../README.md) for the repository purpose, commands, and delivery flow.
+- Read [architecture.md](architecture.md) before deciding where edge behavior belongs.
+- Read [development.md](development.md) before changing Lambda code, packaging, or Terraform.
+- Read [../AGENTS.md](../AGENTS.md) if you are using an AI agent in this repository.
 
-- `src/functions/`: Bun handlers for Lambdas
-- `terraform/`: serverless infrastructure baseline
-- `scripts/`: lightweight lint and Lambda packaging
+## Document Map
 
-## Environments
+- [architecture.md](architecture.md) - current boundaries and edge architecture guidance
+- [development.md](development.md) - local workflow, validation commands, and doc rules
+- [../AGENTS.md](../AGENTS.md) - repo instructions for AI agents
+- [../.ai/project-context.md](../.ai/project-context.md) - compact AI-readable project context
+- [../.ai/contributing.md](../.ai/contributing.md) - AI-assisted change checklist
+- [../.ai/task-template.md](../.ai/task-template.md) - reusable task brief template
 
-- branch `stag` maps to GitHub environment `staging`
-- branch `prod` maps to GitHub environment `production`
-- AWS naming uses `stag` and `prod` suffixes
+## Who Should Read What
 
-## Expected environment variables and secrets
-
-- `AWS_REGION`
-- `AWS_ROLE_ARN`
-- `EDGE_ARTIFACT_BUCKET`
-- `JWT_ISSUER`
-- `JWT_AUDIENCE`
-- `DATADOG_API_KEY`
-- `DATADOG_APP_KEY`
+- Engineers new to the repo: `README.md` then `development.md`
+- Engineers deciding ownership boundaries: `architecture.md`
+- AI-assisted contributors: `AGENTS.md` and `.ai/project-context.md`
