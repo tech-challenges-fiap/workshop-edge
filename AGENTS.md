@@ -2,9 +2,9 @@
 
 ## Mission
 
-Work in `workshop-edge` as the edge and serverless integration repository for
-the workshop split. Keep this repo focused on external adapters, Lambda
-handlers, and packaging/deployment contracts for edge workloads.
+Work in `workshop-edge` as an edge and serverless integration repository. Keep
+this repo focused on external adapters, Lambda handlers, and
+packaging/deployment contracts for edge workloads.
 
 ## Scope Boundaries
 
@@ -21,10 +21,6 @@ Out of scope:
 - core application business logic
 - database provisioning
 - shared cluster, ingress, or networking infrastructure
-
-If a change belongs to `workshop-app`, `workshop-db`, or
-`workshop-platform`, document the dependency instead of moving that
-responsibility here.
 
 ## Read First
 
@@ -57,7 +53,7 @@ correct.
 
 - Write docs and AI guidance in English
 - Do not invent integrations or API Gateway resources that are not defined
-- Keep edge responsibilities separate from application and platform concerns
+- Keep edge responsibilities separate from core application and infrastructure concerns
 - Keep placeholder behavior clearly labeled as placeholder behavior
 
 ## Documentation Expectations

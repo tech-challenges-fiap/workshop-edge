@@ -1,11 +1,9 @@
 # workshop-edge Architecture
 
-## Role in the Split
+## Role
 
-`workshop-edge` is the external adapter layer of the workshop split. Its
-long-term role is to expose edge contracts, serverless entrypoints, and
-integration-specific behavior while keeping the core domain logic in
-`workshop-app`.
+`workshop-edge` is the external adapter layer. It owns edge contracts,
+serverless entrypoints, and integration-specific behavior.
 
 ## Boundaries
 
@@ -16,11 +14,8 @@ This repository owns:
 - edge-specific Terraform naming and deployment contracts
 - packaging of Lambda artifacts
 
-This repository does not own:
-
-- workshop domain/application rules
-- PostgreSQL provisioning
-- shared cluster, ingress, or networking capabilities
+This repository does not own core application rules, database provisioning, or
+shared cluster, ingress, or networking capabilities.
 
 ## Current Implementation Surface
 
@@ -36,12 +31,6 @@ Today the repository contains:
 The current handlers are bootstrap placeholders. They define edge-oriented
 contracts without claiming production-complete behavior.
 
-## Dependencies and Interactions
-
-- `workshop-app` is the future application-layer target for domain and business workflows.
-- `workshop-db` should own database provisioning rather than storing persistence logic here.
-- `workshop-platform` should own shared runtime infrastructure used by edge deployments where appropriate.
-
 ## Current Scaffold vs Target State
 
 Current scaffold:
@@ -50,7 +39,7 @@ Current scaffold:
 - local packaging into zip artifacts
 - Terraform naming baseline only
 
-Target state derived from `14soat-group56`:
+Target state:
 
 - dedicated home for external adapters and public/edge contracts
 - integration-specific authentication or notification entrypoints
@@ -60,4 +49,4 @@ Target state derived from `14soat-group56`:
 
 - Do not move application business rules into Lambda handlers by default.
 - Do not document a full API Gateway deployment as implemented unless Terraform defines it.
-- Do not use this repo for database or shared platform provisioning.
+- Do not use this repo for infrastructure provisioning.

@@ -1,9 +1,7 @@
 # workshop-edge
 
-`workshop-edge` owns the edge delivery layer for the `workshop` platform split.
-It is the future home for API Gateway integration, Lambda entrypoints, and
-other external-facing adapters that should stay outside the core application
-repository.
+`workshop-edge` owns the edge delivery layer for the `workshop` service. It
+holds Lambda entrypoints, adapter behavior, and external-facing delivery logic.
 
 ## What This Repository Owns
 
@@ -12,8 +10,8 @@ repository.
 - Terraform baseline for edge infrastructure naming
 - Lambda packaging and edge-specific CI validation
 
-This repository does not own application domain logic, database provisioning,
-or shared platform infrastructure.
+This repository does not own core application logic, database provisioning, or
+shared runtime platform infrastructure.
 
 ## Current Scaffold Status
 

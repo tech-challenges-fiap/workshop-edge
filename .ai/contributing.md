@@ -14,4 +14,4 @@
 - repository boundary correctness
 - handler contract accuracy
 - artifact packaging accuracy
-- no accidental application, database, or platform responsibility creep
+- no accidental scope creep into core application or infrastructure concerns

@@ -1,7 +1,7 @@
 # workshop-edge docs
 
-This directory explains how `workshop-edge` should evolve into the dedicated
-edge and serverless integration repository for the workshop platform split.
+This directory explains how `workshop-edge` should be developed and maintained
+as a standalone edge and serverless integration repository.
 
 ## Read This First
 
@@ -12,7 +12,7 @@ edge and serverless integration repository for the workshop platform split.
 
 ## Document Map
 
-- [architecture.md](architecture.md) - current boundaries, dependencies, and target edge role
+- [architecture.md](architecture.md) - current boundaries and edge architecture guidance
 - [development.md](development.md) - local workflow, validation commands, and doc rules
 - [../AGENTS.md](../AGENTS.md) - repo instructions for AI agents
 - [../.ai/project-context.md](../.ai/project-context.md) - compact AI-readable project context

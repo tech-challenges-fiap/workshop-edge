@@ -2,9 +2,8 @@
 
 ## Purpose
 
-`workshop-edge` is the edge adapter repository for the workshop split. It
-should hold Lambda handlers, external contract translation, and other
-integration-facing components.
+`workshop-edge` is the edge adapter repository. It holds Lambda handlers,
+external contract translation, and other integration-facing components.
 
 ## Current State
 
@@ -14,11 +13,11 @@ integration-facing components.
 - zip artifacts in `artifacts/`
 - Terraform naming baseline
 
-## Adjacent Repositories
+## Operating Constraint
 
-- `workshop-app`: application logic and future domain behavior
-- `workshop-db`: database provisioning
-- `workshop-platform`: shared infrastructure and platform capabilities
+- keep the repository focused on edge adapters and entrypoints
+- treat core application logic and infrastructure provisioning as out of scope
+- document only integrations and contracts defined here
 
 ## Important Workflow
 
