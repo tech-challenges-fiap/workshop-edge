@@ -266,6 +266,37 @@ resource "aws_apigatewayv2_stage" "environment" {
   }
 }
 
+data "aws_subnet" "first_private" {
+  count = local.lambda_vpc_enabled ? 1 : 0
+  id    = var.private_subnet_ids[0]
+}
+
+resource "aws_security_group" "vpc_endpoint" {
+  count       = local.lambda_vpc_enabled ? 1 : 0
+  name        = "${local.name_prefix}-vpce"
+  description = "Allow HTTPS from Lambda security groups to VPC endpoints"
+  vpc_id      = data.aws_subnet.first_private[0].vpc_id
+  tags        = local.tags
+
+  ingress {
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = var.lambda_security_group_ids
+  }
+}
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  count               = local.lambda_vpc_enabled ? 1 : 0
+  vpc_id              = data.aws_subnet.first_private[0].vpc_id
+  service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.vpc_endpoint[0].id]
+  tags                = local.tags
+}
+
 resource "aws_lambda_permission" "allow_auth_api_gateway" {
   statement_id  = "AllowExecutionFromHttpApi"
   action        = "lambda:InvokeFunction"
