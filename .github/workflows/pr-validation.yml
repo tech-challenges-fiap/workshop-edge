@@ -61,7 +61,14 @@ jobs:
 
       - name: Terraform init
         working-directory: terraform
-        run: terraform init -backend=false
+        env:
+          DEPLOY_ENV: stag
+        run: |
+          backend_config="environments/${DEPLOY_ENV}/backend.hcl"
+          if [ ! -f "${backend_config}" ]; then
+            backend_config="environments/${DEPLOY_ENV}/backend.hcl.example"
+          fi
+          terraform init -backend-config="${backend_config}"
 
       - name: Terraform validate
         working-directory: terraform
@@ -69,7 +76,9 @@ jobs:
 
       - name: Terraform plan
         working-directory: terraform
-        run: terraform plan -refresh=false
+        env:
+          TF_VAR_environment: stag
+        run: terraform plan
 
   lambdas:
     name: lambdas
