@@ -1,6 +1,6 @@
 # workshop-edge
 
-[![prod/stag](https://img.shields.io/badge/dynamic/json?label=prod%2Fstag&query=%24.status&url=https%3A%2F%2Fapi.github.com%2Frepos%2Ftech-challenges-fiap%2Fworkshop-edge%2Fcompare%2Fprod...stag&color=blue)](https://github.com/tech-challenges-fiap/workshop-edge/compare/prod...stag)
+[![prod/stag](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftech-challenges-fiap%2Fworkshop-edge%2Fbadges%2Fbadges%2Fprod-stag-sync.json)](https://github.com/tech-challenges-fiap/workshop-edge/compare/prod...stag)
 
 `workshop-edge` owns the edge delivery layer for the `workshop` service. It
 holds Lambda entrypoints, adapter behavior, and external-facing delivery logic.
