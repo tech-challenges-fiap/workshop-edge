@@ -14,8 +14,6 @@ jobs:
   terraform:
     name: terraform
     runs-on: ubuntu-latest
-    environment:
-      name: staging
     env:
       TF_VAR_app_base_url: ${{ vars.APP_BASE_URL || 'https://workshop-app.example.invalid' }}
       TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
