@@ -1,5 +1,7 @@
 # workshop-edge
 
+[![Prod/Stag sync](https://github.com/tech-challenges-fiap/workshop-edge/actions/workflows/branch-sync.yml/badge.svg)](https://github.com/tech-challenges-fiap/workshop-edge/actions/workflows/branch-sync.yml)
+
 `workshop-edge` owns the edge delivery layer for the `workshop` service. It
 holds Lambda entrypoints, adapter behavior, and external-facing delivery logic.
 
