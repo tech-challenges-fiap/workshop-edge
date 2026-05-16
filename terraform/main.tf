@@ -272,7 +272,7 @@ data "aws_subnet" "first_private" {
 }
 
 resource "aws_security_group" "vpc_endpoint" {
-  count       = local.lambda_vpc_enabled ? 1 : 0
+  count       = local.lambda_vpc_enabled && var.create_vpc_endpoints ? 1 : 0
   name        = "${local.name_prefix}-vpce"
   description = "Allow HTTPS from Lambda security groups to VPC endpoints"
   vpc_id      = data.aws_subnet.first_private[0].vpc_id
@@ -287,7 +287,7 @@ resource "aws_security_group" "vpc_endpoint" {
 }
 
 resource "aws_vpc_endpoint" "secretsmanager" {
-  count               = local.lambda_vpc_enabled ? 1 : 0
+  count               = local.lambda_vpc_enabled && var.create_vpc_endpoints ? 1 : 0
   vpc_id              = data.aws_subnet.first_private[0].vpc_id
   service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
   vpc_endpoint_type   = "Interface"

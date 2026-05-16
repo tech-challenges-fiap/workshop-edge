@@ -29,6 +29,7 @@ jobs:
       TF_VAR_lambda_security_group_ids: ${{ vars.LAMBDA_SECURITY_GROUP_IDS_JSON }}
       TF_VAR_notification_webhook_url: ${{ vars.NOTIFICATION_WEBHOOK_URL }}
       TF_VAR_private_subnet_ids: ${{ vars.PRIVATE_SUBNET_IDS_JSON }}
+      TF_VAR_create_vpc_endpoints: ${{ vars.CREATE_VPC_ENDPOINTS || 'true' }}
       TF_VAR_repo: edge
     steps:
       - name: Checkout
