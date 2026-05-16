@@ -4,6 +4,7 @@ locals {
   notify_lambda_name   = "${local.name_prefix}-${var.notify_resource_suffix}"
   api_name             = "${local.name_prefix}-http-api"
   app_origin           = trimsuffix(var.app_base_url, "/")
+  app_host             = var.app_host_header != "" ? var.app_host_header : regex("://([^/]+)", var.app_base_url)[0]
   artifacts_dir        = abspath("${path.module}/../artifacts")
   auth_artifact_path   = "${local.artifacts_dir}/workshop-edge-auth-cpf.zip"
   notify_artifact_path = "${local.artifacts_dir}/workshop-edge-notify.zip"
@@ -206,6 +207,7 @@ resource "aws_apigatewayv2_integration" "app_proxy" {
 
   request_parameters = {
     "append:header.x-request-id" = "$context.requestId"
+    "overwrite:header.host"      = local.app_host
     "overwrite:path"             = "/$request.path.proxy"
   }
 }

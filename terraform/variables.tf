@@ -146,6 +146,12 @@ variable "api_throttle_rate_limit" {
   default     = 50
 }
 
+variable "app_host_header" {
+  description = "Host header sent to the nginx ingress when proxying to workshop-app. Must match the Ingress rule host for the target environment."
+  type        = string
+  default     = ""
+}
+
 variable "cors_allow_origins" {
   description = "Origins allowed by the edge HTTP API."
   type        = list(string)
