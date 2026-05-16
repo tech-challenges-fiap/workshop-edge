@@ -3,7 +3,6 @@ dist/
 coverage/
 node_modules/
 .terraform/
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 .DS_Store

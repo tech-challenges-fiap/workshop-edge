@@ -1,0 +1,9 @@
+environment               = "stag"
+app_base_url              = "https://replace-with-stag-workshop-app-hostname"
+db_host                   = "replace-with-stag-db-host"
+db_port                   = 5432
+db_name                   = "workshop"
+db_secret_arn             = "arn:aws:secretsmanager:us-east-1:000000000000:secret:workshop-db-stag-credentials"
+jwt_secret_arn            = "arn:aws:secretsmanager:us-east-1:000000000000:secret:workshop-edge-stag-jwt"
+private_subnet_ids        = ["subnet-00000000000000000", "subnet-11111111111111111"]
+lambda_security_group_ids = ["sg-00000000000000000"]
