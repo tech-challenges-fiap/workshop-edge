@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What This Repo Is
+## Overview
 
 `workshop-edge` is the external adapter layer for the `workshop` service. It owns Lambda handlers, API Gateway routes, and edge-specific Terraform. It does **not** own core application business logic, database provisioning, or shared platform infrastructure.
 
@@ -91,4 +91,7 @@ The `/api/{proxy+}` integration uses `overwrite:path = "/$request.path.proxy"` t
 - Do not log raw CPF values or bearer tokens anywhere
 - Do not move application business logic into these Lambda handlers
 - Do not create RDS, VPC, EKS, or ingress resources in this repo's Terraform
-- When handlers, artifacts, commands, or workflows change, update `README.md` and `docs/` in the same PR
+
+## Documentation
+
+Update `README.md` and `docs/` in the same PR when handlers, artifacts, commands, or workflows change.
