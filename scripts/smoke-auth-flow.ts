@@ -1,6 +1,7 @@
 const edgeBaseUrl = requiredEnv("EDGE_BASE_URL").replace(/\/+$/, "");
 const smokeCpf = requiredEnv("SMOKE_CPF");
 const protectedPath = process.env.SMOKE_PROTECTED_PATH ?? "/api/work-orders";
+const skipAppProxy = process.env.SMOKE_SKIP_APP_PROXY === "true";
 
 const authResponse = await fetch(`${edgeBaseUrl}/auth/login`, {
   method: "POST",
@@ -25,17 +26,23 @@ if (authBody.token_type !== "Bearer" || !authBody.access_token) {
   throw new Error("auth smoke step did not return a bearer token");
 }
 
-const appResponse = await fetch(`${edgeBaseUrl}${withLeadingSlash(protectedPath)}`, {
-  headers: {
-    authorization: `Bearer ${authBody.access_token}`,
-  },
-});
+console.log("Auth smoke step passed: received Bearer token.");
 
-if (!appResponse.ok) {
-  throw new Error(`protected app smoke step failed with HTTP ${appResponse.status}`);
+if (skipAppProxy) {
+  console.log("Skipping app proxy smoke step (SMOKE_SKIP_APP_PROXY=true).");
+} else {
+  const appResponse = await fetch(`${edgeBaseUrl}${withLeadingSlash(protectedPath)}`, {
+    headers: {
+      authorization: `Bearer ${authBody.access_token}`,
+    },
+  });
+
+  if (!appResponse.ok) {
+    throw new Error(`protected app smoke step failed with HTTP ${appResponse.status}`);
+  }
+
+  console.log(`App proxy smoke step passed for ${withLeadingSlash(protectedPath)}.`);
 }
-
-console.log(`Smoke auth flow passed for ${withLeadingSlash(protectedPath)}.`);
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
