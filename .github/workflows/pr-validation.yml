@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   terraform:
@@ -44,12 +43,6 @@ jobs:
           bun run build
           bun run package:lambdas
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -59,24 +52,11 @@ jobs:
 
       - name: Terraform init
         working-directory: terraform
-        env:
-          DEPLOY_ENV: stag
-        run: |
-          backend_config="environments/${DEPLOY_ENV}/backend.hcl"
-          if [ ! -f "${backend_config}" ]; then
-            backend_config="environments/${DEPLOY_ENV}/backend.hcl.example"
-          fi
-          terraform init -backend-config="${backend_config}"
+        run: terraform init -backend=false
 
       - name: Terraform validate
         working-directory: terraform
         run: terraform validate
-
-      - name: Terraform plan
-        working-directory: terraform
-        env:
-          TF_VAR_environment: stag
-        run: terraform plan
 
   lambdas:
     name: lambdas
