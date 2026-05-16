@@ -23,8 +23,10 @@ info:
     Allowed origins: configurable (default `*`)
 
 servers:
-  - url: /
-    description: AWS HTTP API Gateway endpoint
+  - url: https://nach89wgoa.execute-api.sa-east-1.amazonaws.com/stag
+    description: Staging (AWS HTTP API Gateway)
+  - url: https://93telx7g0g.execute-api.sa-east-1.amazonaws.com/prod
+    description: Production (AWS HTTP API Gateway)
 
 paths:
   /auth/login:
