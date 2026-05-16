@@ -105,6 +105,7 @@ Set these GitHub Environment variables for `staging` and `production`:
 - `SMOKE_CPF`, which must belong to an active person with a role allowed by the
   protected smoke-test route
 - `SMOKE_PROTECTED_PATH`, defaulting to `/api/work-orders`
+- `SMOKE_SKIP_APP_PROXY=true` only as an explicit emergency override
 
 `PRIVATE_SUBNET_IDS_JSON` and `LAMBDA_SECURITY_GROUP_IDS_JSON` must be JSON/HCL
 list strings such as `["subnet-aaa","subnet-bbb"]`.
@@ -113,7 +114,7 @@ list strings such as `["subnet-aaa","subnet-bbb"]`.
 
 - `feature/* -> stag`: Pull Request validated by Terraform checks plus Lambda lint, tests, build, and packaging
 - `stag -> prod`: promotion Pull Request allowed only from `stag`
-- `push` to `stag` or `prod`: deployment workflow uses AWS OIDC, builds/packages Lambdas, applies Terraform, and runs the auth smoke test
+- `push` to `stag` or `prod`: deployment workflow uses AWS OIDC, builds/packages Lambdas, applies Terraform, and runs the auth smoke test. By default, smoke posts `SMOKE_CPF` to `/auth/login`, then calls `/api/work-orders` with the returned Bearer token.
 - `prod` Pull Requests: drift-report and promotion-source workflows enforce branch discipline
 - `Create Promotion PR`: manual workflow that opens the `stag` to `prod` promotion PR when one does not already exist
 
