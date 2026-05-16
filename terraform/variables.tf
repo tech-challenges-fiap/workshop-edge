@@ -157,3 +157,9 @@ variable "extra_lambda_environment" {
   type        = map(string)
   default     = {}
 }
+
+variable "create_vpc_endpoints" {
+  description = "Create VPC endpoints for Secrets Manager. Disable when sharing a VPC with another environment that already created them."
+  type        = bool
+  default     = true
+}
