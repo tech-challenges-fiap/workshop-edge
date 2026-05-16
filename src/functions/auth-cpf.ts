@@ -10,6 +10,7 @@ type ApiGatewayHttpEvent = {
   isBase64Encoded?: boolean;
   requestContext?: {
     requestId?: string;
+    stage?: string;
     http?: {
       method?: string;
       path?: string;
@@ -232,7 +233,11 @@ function parseLoginInput(event: ApiGatewayHttpEvent | AuthCpfLoginInput): AuthCp
     throw new HttpError(405, "MethodNotAllowed", "auth-cpf only accepts POST requests");
   }
 
-  const path = event.rawPath ?? event.requestContext?.http?.path ?? event.path;
+  const rawPath = event.rawPath ?? event.requestContext?.http?.path ?? event.path;
+  const stage = event.requestContext?.stage;
+  const path = stage && rawPath?.startsWith(`/${stage}/`)
+    ? rawPath.slice(stage.length + 1)
+    : rawPath;
 
   if (path !== "/auth/login") {
     throw new HttpError(404, "NotFound", "auth route not found");

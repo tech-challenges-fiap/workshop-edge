@@ -186,15 +186,38 @@ describe("authenticateCpf", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  test("uses rawPath over requestContext.http.path (stage prefix)", async () => {
+  test("strips stage prefix from rawPath using requestContext.stage", async () => {
     const response = await authenticateCpf(
       {
-        rawPath: "/auth/login",
+        rawPath: "/stag/auth/login",
         body: JSON.stringify({ cpf: "123.456.789-00" }),
         requestContext: {
+          stage: "stag",
           http: {
             method: "POST",
             path: "/stag/auth/login",
+          },
+        },
+      },
+      {
+        personRepository: activePersonRepository,
+        jwtSecretProvider: async () => "test-secret",
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  test("strips prod stage prefix from rawPath", async () => {
+    const response = await authenticateCpf(
+      {
+        rawPath: "/prod/auth/login",
+        body: JSON.stringify({ cpf: "123.456.789-00" }),
+        requestContext: {
+          stage: "prod",
+          http: {
+            method: "POST",
+            path: "/prod/auth/login",
           },
         },
       },
