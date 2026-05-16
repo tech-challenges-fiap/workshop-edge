@@ -1,0 +1,485 @@
+openapi: 3.0.3
+info:
+  title: Workshop Edge — External API
+  version: 1.0.0
+  description: |
+    External-facing API for the workshop system, served via AWS HTTP API Gateway (workshop-edge).
+
+    This document covers:
+    - `POST /auth/login` — CPF-based authentication; issues HS256 JWT tokens
+    - `POST /notify` — outbound notification delivery (email / SMS)
+    - `ANY /api/{proxy+}` — transparent proxy to `workshop-app`; see workshop-app OpenAPI spec for the full route catalogue
+
+    ## Authentication flow
+
+    1. Client calls `POST /auth/login` with a CPF and receives a Bearer token (valid 900 s).
+    2. Client includes `Authorization: Bearer <token>` on every protected `/api/*` request.
+    3. The token is validated by `workshop-app` (same shared HS256 secret).
+
+    ## CORS
+
+    Allowed headers: `Authorization`, `Content-Type`, `X-Request-Id`
+    Allowed methods: `GET POST PUT PATCH DELETE OPTIONS`
+    Allowed origins: configurable (default `*`)
+
+servers:
+  - url: /
+    description: AWS HTTP API Gateway endpoint
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate via CPF
+      description: |
+        Looks up a person by CPF in the workshop database, enforces `status = active`,
+        and returns a signed HS256 JWT.
+
+        CPF is accepted with or without formatting (dots/dashes are stripped before lookup).
+
+        **JWT claims returned:** `sub`, `person_id`, `cpf` (digits only), `role`, `status`,
+        `iss` (`workshop-edge`), `aud` (`workshop-app`), `iat`, `exp`, `jti`.
+
+        **Errors:**
+        - 400 — CPF missing or has wrong shape (not 11 digits after stripping)
+        - 401 — person not found
+        - 403 — person found but `status ≠ active`
+        - 405 — non-POST request
+        - 500 — database or JWT secret failure
+      operationId: loginByCpf
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+            examples:
+              formatted:
+                summary: CPF with formatting
+                value:
+                  cpf: "123.456.789-00"
+              raw:
+                summary: CPF digits only
+                value:
+                  cpf: "12345678900"
+      responses:
+        "200":
+          description: JWT token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+              example:
+                token_type: Bearer
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                expires_in: 900
+        "400":
+          description: Invalid CPF format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              example:
+                error: ValidationError
+                details:
+                  - path: [cpf]
+                    message: CPF must have 11 digits
+                    code: invalid_string
+        "401":
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: Unauthorized
+                message: Person not found
+        "403":
+          description: Person status is not active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: Forbidden
+                message: Person is not active
+        "405":
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected error (database or JWT secret failure)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notify:
+    post:
+      tags:
+        - Notifications
+      summary: Send notification
+      description: |
+        Accepts a notification request and forwards it to the configured webhook provider
+        (`NOTIFICATION_WEBHOOK_URL`). Returns 202 immediately.
+
+        **Two accepted formats:**
+
+        **Normalized** — explicit channel + destination:
+        ```json
+        { "channel": "email", "destination": "user@example.com", "message": "..." }
+        ```
+
+        **App-style** — email and/or phone in top-level fields:
+        ```json
+        { "email": "user@example.com", "phone": "+5511988887777", "message": "..." }
+        ```
+        App-style generates one delivery per present channel (email → email, phone → sms).
+
+        If `NOTIFICATION_WEBHOOK_URL` is not set the request is accepted silently (no external call).
+        If the webhook returns a non-2xx status, the endpoint returns 502.
+
+        **Errors:**
+        - 400 — missing `message`, invalid `channel`, or no destination provided
+        - 405 — non-POST request
+        - 500 — internal parsing failure
+        - 502 — webhook provider returned error
+      operationId: sendNotification
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotifyRequest"
+            examples:
+              normalized:
+                summary: Normalized format (single channel)
+                value:
+                  channel: email
+                  destination: user@example.com
+                  message: "Your vehicle is ready for pickup."
+              appStyleBoth:
+                summary: App-style (email + SMS)
+                value:
+                  email: user@example.com
+                  phone: "+5511988887777"
+                  message: "Your work order is awaiting approval."
+              appStyleEmail:
+                summary: App-style (email only)
+                value:
+                  email: user@example.com
+                  message: "Diagnosis complete."
+      responses:
+        "202":
+          description: Notification accepted for delivery
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotifyResponse"
+              example:
+                message: notification accepted
+                accepted: true
+                deliveries:
+                  - channel: email
+                    destination: user@example.com
+                  - channel: sms
+                    destination: "+5511988887777"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "405":
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Notification provider returned an error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: NotificationDeliveryFailed
+                message: Webhook provider returned non-2xx status
+
+  /api/{proxy}:
+    summary: Workshop application proxy
+    description: |
+      All requests to `/api/{proxy}` are forwarded to `workshop-app` with the `/api` prefix stripped.
+
+      **Path mapping:** `GET /api/work-orders` → `GET /work-orders` on workshop-app
+
+      Protected routes require `Authorization: Bearer <token>` (token issued by `POST /auth/login`).
+
+      Refer to the **workshop-app OpenAPI specification** for the complete route catalogue,
+      request/response schemas, status codes, and business rules.
+
+      **Available route groups (under /api/):**
+      - `GET /api/health` — health check (unauthenticated)
+      - `GET|POST /api/stock-items`, `GET|PUT|DELETE /api/stock-items/{id}`, `/api/stock-items/{id}/increase`, `/api/stock-items/{id}/consume`
+      - `GET|POST /api/services`, `GET|PUT|DELETE /api/services/{id}`, `GET /api/services/{id}/average-duration`
+      - `GET|POST /api/service-tasks`, `GET /api/service-tasks/{id}`, `/api/service-tasks/{id}/approve|reject|start-execution|complete`
+      - `GET|POST /api/work-orders`, `GET /api/work-orders/{id}`, `/api/work-orders/{id}/cancel|deliver|diagnosis/start|diagnosis/complete`
+      - `GET|POST /api/vehicles`, `GET /api/vehicles/{id}`, `GET /api/vehicles/by-plate/{plate}`
+      - `GET|PUT|DELETE /api/person`, `GET|PUT|DELETE /api/person/{id}`
+      - `POST /api/webhooks/work-orders/events` — inbound external events (unauthenticated)
+      - `GET /api/public/work-orders/{token}`, `GET /api/public/work-orders/{token}/status|approval`
+      - `POST /api/public/work-orders/{token}/service-tasks/{id}/approve|reject`
+    parameters:
+      - name: proxy
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Path forwarded to workshop-app (without the /api prefix)
+    get:
+      tags:
+        - Application (Proxy)
+      operationId: proxyGet
+      summary: Proxy GET to workshop-app
+      security:
+        - bearerAuth: []
+        - {}
+      responses:
+        "200":
+          description: Successful response from workshop-app
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Unexpected error
+    post:
+      tags:
+        - Application (Proxy)
+      operationId: proxyPost
+      summary: Proxy POST to workshop-app
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - bearerAuth: []
+        - {}
+      responses:
+        "200":
+          description: Successful response from workshop-app
+        "201":
+          description: Resource created
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "409":
+          description: Business conflict
+        "500":
+          description: Unexpected error
+    put:
+      tags:
+        - Application (Proxy)
+      operationId: proxyPut
+      summary: Proxy PUT to workshop-app
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful response from workshop-app
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+        "500":
+          description: Unexpected error
+    delete:
+      tags:
+        - Application (Proxy)
+      operationId: proxyDelete
+      summary: Proxy DELETE to workshop-app
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Deleted successfully
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+        "500":
+          description: Unexpected error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 JWT issued by POST /auth/login (valid 900 s). Claims include sub, person_id, cpf, role, status.
+
+  schemas:
+    AuthLoginRequest:
+      type: object
+      properties:
+        cpf:
+          type: string
+          description: CPF with or without formatting (dots/dashes are stripped before lookup)
+          example: "123.456.789-00"
+      required:
+        - cpf
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        token_type:
+          type: string
+          example: Bearer
+        access_token:
+          type: string
+          description: Signed HS256 JWT
+        expires_in:
+          type: integer
+          description: Token lifetime in seconds
+          example: 900
+      required:
+        - token_type
+        - access_token
+        - expires_in
+
+    NotifyRequest:
+      description: Normalized or app-style notification payload
+      oneOf:
+        - $ref: "#/components/schemas/NotifyNormalizedRequest"
+        - $ref: "#/components/schemas/NotifyAppStyleRequest"
+
+    NotifyNormalizedRequest:
+      type: object
+      description: Explicit channel + destination
+      properties:
+        channel:
+          type: string
+          enum: [email, sms]
+        destination:
+          type: string
+          description: Email address (channel=email) or phone number (channel=sms)
+        message:
+          type: string
+          minLength: 1
+      required:
+        - channel
+        - destination
+        - message
+      additionalProperties: false
+
+    NotifyAppStyleRequest:
+      type: object
+      description: App-style; generates one delivery per present channel field
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        message:
+          type: string
+          minLength: 1
+      required:
+        - message
+
+    NotifyDelivery:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [email, sms]
+        destination:
+          type: string
+      required:
+        - channel
+        - destination
+
+    NotifyResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: notification accepted
+        accepted:
+          type: boolean
+          example: true
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotifyDelivery"
+      required:
+        - message
+        - accepted
+        - deliveries
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: ValidationError
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+              message:
+                type: string
+              code:
+                type: string
+            additionalProperties: true
+      required:
+        - error
+        - details
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
