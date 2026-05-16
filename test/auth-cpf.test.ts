@@ -186,6 +186,27 @@ describe("authenticateCpf", () => {
     expect(response.statusCode).toBe(200);
   });
 
+  test("uses rawPath over requestContext.http.path (stage prefix)", async () => {
+    const response = await authenticateCpf(
+      {
+        rawPath: "/auth/login",
+        body: JSON.stringify({ cpf: "123.456.789-00" }),
+        requestContext: {
+          http: {
+            method: "POST",
+            path: "/stag/auth/login",
+          },
+        },
+      },
+      {
+        personRepository: activePersonRepository,
+        jwtSecretProvider: async () => "test-secret",
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+  });
+
   test("rejects proxy paths that only end with login", async () => {
     const response = await authenticateCpf(
       {

@@ -232,7 +232,7 @@ function parseLoginInput(event: ApiGatewayHttpEvent | AuthCpfLoginInput): AuthCp
     throw new HttpError(405, "MethodNotAllowed", "auth-cpf only accepts POST requests");
   }
 
-  const path = event.requestContext?.http?.path ?? event.rawPath ?? event.path;
+  const path = event.rawPath ?? event.requestContext?.http?.path ?? event.path;
 
   if (path !== "/auth/login") {
     throw new HttpError(404, "NotFound", "auth route not found");
