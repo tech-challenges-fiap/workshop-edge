@@ -5,11 +5,16 @@
   "scripts": {
     "lint": "bun run scripts/lint.ts",
     "test": "bun test",
-    "build": "bun build ./src/functions/auth-cpf.ts ./src/functions/notify.ts --outdir dist --target bun",
-    "package:lambdas": "bash ./scripts/package-lambdas.sh"
+    "build": "bun build ./src/functions/auth-cpf.ts ./src/functions/notify.ts --outdir dist --target node --format esm",
+    "package:lambdas": "bash ./scripts/package-lambdas.sh",
+    "smoke:auth": "bun run scripts/smoke-auth-flow.ts"
   },
   "engines": {
     "bun": ">=1.3.6"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "pg": "^8.20.0"
   }
 }
 
