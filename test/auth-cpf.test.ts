@@ -185,4 +185,26 @@ describe("authenticateCpf", () => {
 
     expect(response.statusCode).toBe(200);
   });
+
+  test("rejects proxy paths that only end with login", async () => {
+    const response = await authenticateCpf(
+      {
+        rawPath: "/auth/foo/login",
+        body: JSON.stringify({ cpf: "123.456.789-00" }),
+        requestContext: {
+          http: {
+            method: "POST",
+            path: "/auth/foo/login",
+          },
+        },
+      },
+      {
+        personRepository: activePersonRepository,
+        jwtSecretProvider: async () => "test-secret",
+      },
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body).not.toContain("access_token");
+  });
 });
