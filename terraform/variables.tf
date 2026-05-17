@@ -39,6 +39,12 @@ variable "notify_resource_suffix" {
   default     = "notify"
 }
 
+variable "docs_resource_suffix" {
+  description = "Identifier suffix for the API docs Lambda."
+  type        = string
+  default     = "docs"
+}
+
 variable "app_base_url" {
   description = "Base URL of workshop-app ingress for this environment, without the /api prefix."
   type        = string
