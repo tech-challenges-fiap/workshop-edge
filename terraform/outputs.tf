@@ -28,6 +28,16 @@ output "notify_lambda_name" {
   value       = aws_lambda_function.notify.function_name
 }
 
+output "docs_lambda_name" {
+  description = "Canonical name for the docs Lambda."
+  value       = aws_lambda_function.docs.function_name
+}
+
+output "docs_url" {
+  description = "Swagger UI URL for this environment."
+  value       = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.environment.name}/docs"
+}
+
 output "api_access_log_group_name" {
   description = "CloudWatch log group used by HTTP API access logs."
   value       = aws_cloudwatch_log_group.api_access.name

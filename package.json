@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "bun run scripts/lint.ts",
     "test": "bun test",
-    "build": "bun build ./src/functions/auth-cpf.ts ./src/functions/notify.ts --outdir dist --target node --format esm",
+    "build": "bun build ./src/functions/auth-cpf.ts ./src/functions/notify.ts ./src/functions/docs.ts --outdir dist --target node --format esm",
     "package:lambdas": "bash ./scripts/package-lambdas.sh",
     "smoke:auth": "bun run scripts/smoke-auth-flow.ts"
   },
