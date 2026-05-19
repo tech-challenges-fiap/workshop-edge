@@ -1,5 +1,7 @@
 type Headers = Record<string, string | undefined>;
 
+import { logger } from "./logger";
+
 type ApiGatewayHttpEvent = {
   body?: string | null;
   headers?: Headers;
@@ -72,14 +74,17 @@ export async function notify(
   event: ApiGatewayHttpEvent | NotificationInput,
   dependencies: NotifyDependencies = {},
 ): Promise<LambdaResponse> {
+  const context = readContext(event);
+
   try {
-    const context = readContext(event);
     const deliveries = normalizeNotificationInput(parseNotificationInput(event));
     const sender = dependencies.sender ?? createWebhookNotificationSender();
 
     for (const delivery of deliveries) {
       await sender.send(delivery, context);
     }
+
+    logger.info("notification accepted", { function: "notify", request_id: context.requestId, status_code: 202, deliveries: deliveries.length });
 
     return jsonResponse(202, {
       message: "notification accepted",
@@ -105,12 +110,14 @@ export async function notify(
     }
 
     if (error instanceof Error) {
+      logger.error("notification delivery failed", { function: "notify", request_id: context.requestId, status_code: 502, error: error.message });
       return jsonResponse(502, {
         error: "NotificationDeliveryFailed",
         message: error.message,
       });
     }
 
+    logger.error("notification unknown error", { function: "notify", request_id: context.requestId, status_code: 500 });
     return jsonResponse(500, {
       error: "UnknownError",
       message: "unknown notification failure",
@@ -208,6 +215,7 @@ function createWebhookNotificationSender(): NotificationSender {
         headers: {
           "content-type": "application/json",
           ...(context.requestId ? { "x-request-id": context.requestId } : {}),
+          ...(context.requestId ? { traceparent: `00-${context.requestId.replace(/-/g, "").padEnd(32, "0").slice(0, 32)}-${Date.now().toString(16).padStart(16, "0")}-01` } : {}),
         },
         body: JSON.stringify({
           channel: delivery.channel,
