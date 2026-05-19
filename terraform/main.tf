@@ -24,6 +24,8 @@ locals {
     {
       APP_ENV                             = var.environment
       AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      DD_ENV                              = var.environment
+      DD_SERVICE                          = "workshop-edge"
       JWT_AUDIENCE                        = var.jwt_audience
       JWT_EXPIRES_SECONDS                 = tostring(var.jwt_expires_seconds)
       JWT_ISSUER                          = var.jwt_issuer

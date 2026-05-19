@@ -1,5 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 
+import { logger } from "./logger";
+
 type Headers = Record<string, string | undefined>;
 
 type ApiGatewayHttpEvent = {
@@ -157,6 +159,10 @@ export async function authenticateCpf(
   event: ApiGatewayHttpEvent | AuthCpfLoginInput,
   dependencies: AuthCpfDependencies = {},
 ): Promise<LambdaResponse> {
+  const requestId = isApiGatewayHttpEvent(event)
+    ? (event.requestContext?.requestId ?? randomUUID())
+    : randomUUID();
+
   try {
     const input = parseLoginInput(event);
 
@@ -188,6 +194,8 @@ export async function authenticateCpf(
     );
     const accessToken = signJwt(claims, await jwtSecretProvider());
 
+    logger.info("auth-cpf login success", { function: "auth-cpf", request_id: requestId, status_code: 200 });
+
     return jsonResponse(200, {
       token_type: "Bearer",
       access_token: accessToken,
@@ -195,6 +203,7 @@ export async function authenticateCpf(
     });
   } catch (error) {
     if (error instanceof HttpError) {
+      logger.warn("auth-cpf client error", { function: "auth-cpf", request_id: requestId, status_code: error.statusCode, error: error.error });
       return jsonResponse(error.statusCode, {
         error: error.error,
         message: error.message,
@@ -202,6 +211,7 @@ export async function authenticateCpf(
     }
 
     if (error instanceof SyntaxError) {
+      logger.warn("auth-cpf invalid JSON body", { function: "auth-cpf", request_id: requestId, status_code: 400 });
       return jsonResponse(400, {
         error: "ValidationError",
         message: "request body must be valid JSON",
@@ -209,12 +219,14 @@ export async function authenticateCpf(
     }
 
     if (error instanceof Error) {
+      logger.error("auth-cpf unexpected error", { function: "auth-cpf", request_id: requestId, status_code: 500, error: error.message });
       return jsonResponse(500, {
         error: "UnexpectedError",
         message: error.message,
       });
     }
 
+    logger.error("auth-cpf unknown error", { function: "auth-cpf", request_id: requestId, status_code: 500 });
     return jsonResponse(500, {
       error: "UnknownError",
       message: "unknown authentication failure",
