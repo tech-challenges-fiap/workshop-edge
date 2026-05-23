@@ -49,10 +49,13 @@ The example tfvars files contain placeholder values. Use real outputs from
 - `bun run build` bundles the Lambda entrypoints for Node.js 20 into `dist/`
 - `bun run package:lambdas` runs `scripts/package-lambdas.sh` and creates ZIP artifacts in `artifacts/`
 - `terraform validate` checks the AWS edge infrastructure definition
-- `bun run smoke:auth` authenticates by CPF and calls a protected app route
+- `bun run smoke:auth` posts `SMOKE_CPF` to `/auth/login` and calls
+  `SMOKE_PROTECTED_PATH`, defaulting to `/api/work-orders`, with the returned
+  Bearer token
 
 The smoke CPF must belong to an active person whose role is authorized for
-`SMOKE_PROTECTED_PATH`.
+`SMOKE_PROTECTED_PATH`. Set `SMOKE_SKIP_APP_PROXY=true` only as an explicit
+emergency override.
 
 ## Runtime Configuration
 

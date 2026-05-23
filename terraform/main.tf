@@ -2,12 +2,14 @@ locals {
   name_prefix          = "${var.project}-${var.repo}-${var.environment}"
   auth_lambda_name     = "${local.name_prefix}-${var.auth_resource_suffix}"
   notify_lambda_name   = "${local.name_prefix}-${var.notify_resource_suffix}"
+  docs_lambda_name     = "${local.name_prefix}-${var.docs_resource_suffix}"
   api_name             = "${local.name_prefix}-http-api"
   app_origin           = trimsuffix(var.app_base_url, "/")
   app_host             = var.app_host_header != "" ? var.app_host_header : regex("://([^/]+)", var.app_base_url)[0]
   artifacts_dir        = abspath("${path.module}/../artifacts")
   auth_artifact_path   = "${local.artifacts_dir}/workshop-edge-auth-cpf.zip"
   notify_artifact_path = "${local.artifacts_dir}/workshop-edge-notify.zip"
+  docs_artifact_path   = "${local.artifacts_dir}/workshop-edge-docs.zip"
   lambda_vpc_enabled   = length(var.private_subnet_ids) > 0 && length(var.lambda_security_group_ids) > 0
   secret_arns          = compact([var.db_secret_arn, var.jwt_secret_arn])
 
@@ -22,6 +24,8 @@ locals {
     {
       APP_ENV                             = var.environment
       AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      DD_ENV                              = var.environment
+      DD_SERVICE                          = "workshop-edge"
       JWT_AUDIENCE                        = var.jwt_audience
       JWT_EXPIRES_SECONDS                 = tostring(var.jwt_expires_seconds)
       JWT_ISSUER                          = var.jwt_issuer
@@ -104,6 +108,12 @@ resource "aws_cloudwatch_log_group" "notify_lambda" {
   tags              = local.tags
 }
 
+resource "aws_cloudwatch_log_group" "docs_lambda" {
+  name              = "/aws/lambda/${local.docs_lambda_name}"
+  retention_in_days = var.log_retention_days
+  tags              = local.tags
+}
+
 resource "aws_cloudwatch_log_group" "api_access" {
   name              = "/aws/apigateway/${local.api_name}"
   retention_in_days = var.log_retention_days
@@ -172,6 +182,23 @@ resource "aws_lambda_function" "notify" {
   ]
 }
 
+resource "aws_lambda_function" "docs" {
+  function_name    = local.docs_lambda_name
+  role             = aws_iam_role.lambda.arn
+  runtime          = "nodejs20.x"
+  handler          = "docs.handler"
+  filename         = local.docs_artifact_path
+  source_code_hash = fileexists(local.docs_artifact_path) ? filebase64sha256(local.docs_artifact_path) : null
+  memory_size      = 128
+  timeout          = 10
+  tags             = local.tags
+
+  depends_on = [
+    aws_cloudwatch_log_group.docs_lambda,
+    aws_iam_role_policy_attachment.lambda_basic,
+  ]
+}
+
 resource "aws_apigatewayv2_api" "http" {
   name          = local.api_name
   protocol_type = "HTTP"
@@ -183,6 +210,13 @@ resource "aws_apigatewayv2_api" "http" {
     allow_origins = var.cors_allow_origins
     max_age       = 300
   }
+}
+
+resource "aws_apigatewayv2_integration" "docs" {
+  api_id                 = aws_apigatewayv2_api.http.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.docs.invoke_arn
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "auth_cpf" {
@@ -210,6 +244,18 @@ resource "aws_apigatewayv2_integration" "app_proxy" {
     "overwrite:header.host"      = local.app_host
     "overwrite:path"             = "/$request.path.proxy"
   }
+}
+
+resource "aws_apigatewayv2_route" "docs_html" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "GET /docs"
+  target    = "integrations/${aws_apigatewayv2_integration.docs.id}"
+}
+
+resource "aws_apigatewayv2_route" "docs_yaml" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "GET /openapi.yaml"
+  target    = "integrations/${aws_apigatewayv2_integration.docs.id}"
 }
 
 resource "aws_apigatewayv2_route" "auth_login" {
@@ -311,6 +357,14 @@ resource "aws_lambda_permission" "allow_notify_api_gateway" {
   statement_id  = "AllowExecutionFromHttpApi"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.notify.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_docs_api_gateway" {
+  statement_id  = "AllowExecutionFromHttpApi"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.docs.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
 }
