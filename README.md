@@ -25,8 +25,11 @@ The current implementation provides the edge stack expected by
 - `person.status = active` enforcement before token issuance
 - HS256 JWT signing with the issuer/audience expected by `workshop-app`
 - `notify` Lambda accepting normalized channel payloads or app notification payloads
-- HTTP API Gateway routes for `/auth/*`, `/notify/*`, and `/api/*`
-- `/api/{proxy+}` forwarding to the `workshop-app` base URL
+- HTTP API Gateway routes for `/auth/*`, `/notify/*`, `/os/*`, `/billing/*`, `/execution/*`, and `/api/*`
+- `/os/{proxy+}` forwarding to the Order Service base URL
+- `/billing/{proxy+}` forwarding to the Billing Service base URL
+- `/execution/{proxy+}` forwarding to the Execution Service base URL
+- `/api/{proxy+}` forwarding to the `workshop-app` base URL (migration fallback)
 - CloudWatch log groups, API access logs, Lambda IAM role, and basic throttling
 - Bun-based lint, test, Node.js 20 Lambda build, and Bash/Python ZIP packaging
 - CI validation, Terraform apply on environment branches, and auth smoke test
@@ -34,6 +37,21 @@ The current implementation provides the edge stack expected by
 The repository still relies on environment-specific values from
 `workshop-db`, `workshop-platform`, and GitHub Environments before real deploys
 can succeed.
+
+## API Gateway Routes
+
+| Route | Target |
+|---|---|
+| `POST /auth/login` | `auth-cpf` Lambda |
+| `ANY /auth/{proxy+}` | `auth-cpf` Lambda |
+| `POST /notify` | `notify` Lambda |
+| `ANY /notify/{proxy+}` | `notify` Lambda |
+| `ANY /os/{proxy+}` | HTTP proxy to Order Service (strips `/os` prefix) |
+| `ANY /billing/{proxy+}` | HTTP proxy to Billing Service (strips `/billing` prefix) |
+| `ANY /execution/{proxy+}` | HTTP proxy to Execution Service (strips `/execution` prefix) |
+| `ANY /api/{proxy+}` | HTTP proxy to `workshop-app` — migration fallback (strips `/api` prefix) |
+
+All three service proxy routes forward `x-request-id` from the API Gateway request context.
 
 ## Runtime Contract
 
@@ -93,7 +111,10 @@ Set these GitHub Environment variables for `staging` and `production`:
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
-- `APP_BASE_URL`
+- `OS_BASE_URL` — base URL of the Order Service (Phase 4)
+- `BILLING_BASE_URL` — base URL of the Billing Service (Phase 4)
+- `EXECUTION_BASE_URL` — base URL of the Execution Service (Phase 4)
+- `APP_BASE_URL` — migration fallback for `/api/{proxy+}`; retained until all consumers migrate to service-specific paths
 - `DB_HOST`
 - `DB_PORT`
 - `DB_NAME`
@@ -105,6 +126,10 @@ Set these GitHub Environment variables for `staging` and `production`:
 - `SMOKE_CPF`, which must belong to an active person with a role allowed by the
   protected smoke-test route
 - `SMOKE_PROTECTED_PATH`, defaulting to `/api/work-orders`
+- `SMOKE_SERVICE_PATHS`, optional Phase 4 authenticated route smoke paths as a
+  JSON string array (`["/os/work-orders"]`) or comma-separated list
+  (`/os/work-orders,/billing/invoices`); empty by default so environments do not
+  call invented service URLs
 - `SMOKE_SKIP_APP_PROXY=true` only as an explicit emergency override
 
 `PRIVATE_SUBNET_IDS_JSON` and `LAMBDA_SECURITY_GROUP_IDS_JSON` must be JSON/HCL
@@ -114,7 +139,7 @@ list strings such as `["subnet-aaa","subnet-bbb"]`.
 
 - `feature/* -> stag`: Pull Request validated by Terraform checks plus Lambda lint, tests, build, and packaging
 - `stag -> prod`: promotion Pull Request allowed only from `stag`
-- `push` to `stag` or `prod`: deployment workflow uses AWS OIDC, builds/packages Lambdas, applies Terraform, and runs the auth smoke test. By default, smoke posts `SMOKE_CPF` to `/auth/login`, then calls `/api/work-orders` with the returned Bearer token.
+- `push` to `stag` or `prod`: deployment workflow uses AWS OIDC, builds/packages Lambdas, applies Terraform, and runs the auth smoke test. By default, smoke posts `SMOKE_CPF` to `/auth/login`, then calls `/api/work-orders` with the returned Bearer token. When `SMOKE_SERVICE_PATHS` is configured, the same token is also sent to each listed Phase 4 service route through the edge URL.
 - `prod` Pull Requests: drift-report and promotion-source workflows enforce branch discipline
 - `Create Promotion PR`: manual workflow that opens the `stag` to `prod` promotion PR when one does not already exist
 

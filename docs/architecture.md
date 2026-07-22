@@ -36,7 +36,8 @@ Terraform defines:
 - HTTP API Gateway
 - `/auth/login` and `/auth/{proxy+}` routes to `auth-cpf`
 - `/notify` and `/notify/{proxy+}` routes to `notify`
-- `/api/{proxy+}` HTTP proxy route to `workshop-app`
+- `/os/{proxy+}`, `/billing/{proxy+}`, `/execution/{proxy+}` HTTP proxy routes to Phase 4 microservices
+- `/api/{proxy+}` HTTP proxy route to `workshop-app` (migration fallback; deprecated, pending removal)
 - API access logs and default throttling
 
 ## Authentication Flow
@@ -58,15 +59,37 @@ client -> API Gateway /auth/login -> auth-cpf -> PostgreSQL person lookup -> JWT
 The JWT is intended for `workshop-app`, which validates the same issuer,
 audience, signing secret, expiration, and claims.
 
-## API Proxy Flow
+## Service Proxy Flow (Phase 4)
+
+Phase 4 decomposes `workshop-app` into three independent services. The edge layer
+routes each service prefix to its own base URL without any Lambda handler changes.
+
+```text
+client -> API Gateway /os/{proxy+}        -> Order Service /{proxy}
+client -> API Gateway /billing/{proxy+}   -> Billing Service /{proxy}
+client -> API Gateway /execution/{proxy+} -> Execution Service /{proxy}
+```
+
+Each integration strips its path prefix via `overwrite:path = "/$request.path.proxy"`
+and forwards `x-request-id` from the API Gateway request context for correlation.
+Service base URLs are supplied via `OS_BASE_URL`, `BILLING_BASE_URL`, and
+`EXECUTION_BASE_URL` Terraform variables.
+
+Deployment smoke validation authenticates through `/auth/login` before checking
+protected routes. The legacy `/api/*` fallback is still checked by default via
+`SMOKE_PROTECTED_PATH`; Phase 4 service routes are checked only when operators
+configure `SMOKE_SERVICE_PATHS` for real environment paths. This keeps edge smoke
+coverage explicit without hardcoding unavailable service URLs.
+
+## API Proxy Flow (Migration Fallback)
 
 ```text
 client -> API Gateway /api/{proxy+} -> workshop-app /{proxy}
 ```
 
-The API Gateway HTTP proxy strips the `/api` prefix by overwriting the upstream
-path with the `{proxy}` route parameter. It also forwards `x-request-id` from the
-API Gateway request context for correlation.
+The `/api/{proxy+}` → `APP_BASE_URL` route is retained as a backward-compatibility
+fallback during the Phase 4 migration. It will be removed in a follow-up change
+once all consumers have moved to the service-specific paths above.
 
 ## Notification Flow
 
@@ -75,6 +98,14 @@ It validates the request, normalizes deliveries, and optionally sends them to
 `NOTIFICATION_WEBHOOK_URL`. If no provider URL is configured, the Lambda accepts
 the request without external delivery so lower environments can validate the
 contract without a provider.
+
+## Required External Contracts (Phase 4 Additions)
+
+Phase 4 service owners provide:
+
+- `os_base_url` — Order Service base URL
+- `billing_base_url` — Billing Service base URL
+- `execution_base_url` — Execution Service base URL
 
 ## Required External Contracts
 

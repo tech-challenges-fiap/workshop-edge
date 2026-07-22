@@ -51,11 +51,19 @@ The example tfvars files contain placeholder values. Use real outputs from
 - `terraform validate` checks the AWS edge infrastructure definition
 - `bun run smoke:auth` posts `SMOKE_CPF` to `/auth/login` and calls
   `SMOKE_PROTECTED_PATH`, defaulting to `/api/work-orders`, with the returned
-  Bearer token
+  Bearer token. When `SMOKE_SERVICE_PATHS` is set, it also calls each listed
+  Phase 4 service route with the same token.
 
 The smoke CPF must belong to an active person whose role is authorized for
 `SMOKE_PROTECTED_PATH`. Set `SMOKE_SKIP_APP_PROXY=true` only as an explicit
 emergency override.
+
+`SMOKE_SERVICE_PATHS` is optional and empty by default. Use it only when an
+environment has stable authenticated service routes to validate. It accepts a
+JSON string array such as `["/os/work-orders","/billing/invoices"]` or a
+comma-separated list such as `/os/work-orders,/execution/jobs`. The smoke script
+normalizes leading slashes, fails on non-2xx responses, and never logs CPF or
+Bearer token values.
 
 ## Runtime Configuration
 

@@ -6,6 +6,9 @@ locals {
   api_name             = "${local.name_prefix}-http-api"
   app_origin           = trimsuffix(var.app_base_url, "/")
   app_host             = var.app_host_header != "" ? var.app_host_header : regex("://([^/]+)", var.app_base_url)[0]
+  os_origin            = trimsuffix(var.os_base_url, "/")
+  billing_origin       = trimsuffix(var.billing_base_url, "/")
+  execution_origin     = trimsuffix(var.execution_base_url, "/")
   artifacts_dir        = abspath("${path.module}/../artifacts")
   auth_artifact_path   = "${local.artifacts_dir}/workshop-edge-auth-cpf.zip"
   notify_artifact_path = "${local.artifacts_dir}/workshop-edge-notify.zip"
@@ -246,6 +249,42 @@ resource "aws_apigatewayv2_integration" "app_proxy" {
   }
 }
 
+resource "aws_apigatewayv2_integration" "os_proxy" {
+  api_id             = aws_apigatewayv2_api.http.id
+  integration_type   = "HTTP_PROXY"
+  integration_method = "ANY"
+  integration_uri    = local.os_origin
+
+  request_parameters = {
+    "append:header.x-request-id" = "$context.requestId"
+    "overwrite:path"             = "/$request.path.proxy"
+  }
+}
+
+resource "aws_apigatewayv2_integration" "billing_proxy" {
+  api_id             = aws_apigatewayv2_api.http.id
+  integration_type   = "HTTP_PROXY"
+  integration_method = "ANY"
+  integration_uri    = local.billing_origin
+
+  request_parameters = {
+    "append:header.x-request-id" = "$context.requestId"
+    "overwrite:path"             = "/$request.path.proxy"
+  }
+}
+
+resource "aws_apigatewayv2_integration" "execution_proxy" {
+  api_id             = aws_apigatewayv2_api.http.id
+  integration_type   = "HTTP_PROXY"
+  integration_method = "ANY"
+  integration_uri    = local.execution_origin
+
+  request_parameters = {
+    "append:header.x-request-id" = "$context.requestId"
+    "overwrite:path"             = "/$request.path.proxy"
+  }
+}
+
 resource "aws_apigatewayv2_route" "docs_html" {
   api_id    = aws_apigatewayv2_api.http.id
   route_key = "GET /docs"
@@ -286,6 +325,24 @@ resource "aws_apigatewayv2_route" "api_proxy" {
   api_id    = aws_apigatewayv2_api.http.id
   route_key = "ANY /api/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.app_proxy.id}"
+}
+
+resource "aws_apigatewayv2_route" "os_proxy" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "ANY /os/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.os_proxy.id}"
+}
+
+resource "aws_apigatewayv2_route" "billing_proxy" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "ANY /billing/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_proxy.id}"
+}
+
+resource "aws_apigatewayv2_route" "execution_proxy" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "ANY /execution/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.execution_proxy.id}"
 }
 
 resource "aws_apigatewayv2_stage" "environment" {

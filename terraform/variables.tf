@@ -46,13 +46,46 @@ variable "docs_resource_suffix" {
 }
 
 variable "app_base_url" {
-  description = "Base URL of workshop-app ingress for this environment, without the /api prefix."
+  description = "Base URL of workshop-app ingress for this environment, without the /api prefix. Deprecated: use os_base_url, billing_base_url, and execution_base_url for Phase 4 service-specific routing; this fallback will be removed once all consumers migrate."
   type        = string
   default     = "https://workshop-app.example.invalid"
 
   validation {
     condition     = can(regex("^https?://", var.app_base_url))
     error_message = "app_base_url must start with http:// or https://."
+  }
+}
+
+variable "os_base_url" {
+  description = "Base URL of the Order Service for this environment, without a trailing slash."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^https?://", var.os_base_url))
+    error_message = "os_base_url is required and must start with http:// or https://."
+  }
+}
+
+variable "billing_base_url" {
+  description = "Base URL of the Billing Service for this environment, without a trailing slash."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^https?://", var.billing_base_url))
+    error_message = "billing_base_url is required and must start with http:// or https://."
+  }
+}
+
+variable "execution_base_url" {
+  description = "Base URL of the Execution Service for this environment, without a trailing slash."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = can(regex("^https?://", var.execution_base_url))
+    error_message = "execution_base_url is required and must start with http:// or https://."
   }
 }
 
