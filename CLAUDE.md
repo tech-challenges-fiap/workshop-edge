@@ -6,6 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `workshop-edge` is the external adapter layer for the `workshop` service. It owns Lambda handlers, API Gateway routes, and edge-specific Terraform. It does **not** own core application business logic, database provisioning, or shared platform infrastructure.
 
+
+## OpenSpec Instructions
+
+This repository uses OpenSpec as the mandatory governance process for product, architecture, contracts, infrastructure, and behavior changes. Read `openspec/AGENTS.md` and this repository's `AGENTS.md` before any code change.
+
+- Do not modify implementation paths (`src/`, `terraform/`, `k8s/`, `kubernetes/`, workflows, schemas, API contracts, or runtime behavior) unless an approved change exists under `openspec/changes/<change-id>/`.
+- Validate the change with `npx --yes @fission-ai/openspec validate <change-id> --strict` before implementation and before PR handoff.
+- If the requested work has no change-id, or if the spec is ambiguous, stop and raise the question to Hermes/Void. Do not decide product or architecture scope silently.
+- Keep implementation inside the approved `tasks.md`; update the OpenSpec change before expanding scope.
+- Mention the OpenSpec change-id and validation result in the PR body.
+- After merge to `stag`, archive the completed change with `npx --yes @fission-ai/openspec archive <change-id>`.
+
 ## Commands
 
 ```bash
@@ -71,9 +83,12 @@ Both handlers in `src/functions/` accept either a raw API Gateway HTTP API v2 ev
 | `ANY /auth/{proxy+}` | `auth-cpf` Lambda |
 | `POST /notify` | `notify` Lambda |
 | `ANY /notify/{proxy+}` | `notify` Lambda |
-| `ANY /api/{proxy+}` | HTTP proxy to `workshop-app` (strips `/api` prefix) |
+| `ANY /os/{proxy+}` | HTTP proxy to Order Service (strips `/os` prefix) |
+| `ANY /billing/{proxy+}` | HTTP proxy to Billing Service (strips `/billing` prefix) |
+| `ANY /execution/{proxy+}` | HTTP proxy to Execution Service (strips `/execution` prefix) |
+| `ANY /api/{proxy+}` | HTTP proxy to `workshop-app` — migration fallback (strips `/api` prefix) |
 
-The `/api/{proxy+}` integration uses `overwrite:path = "/$request.path.proxy"` to strip the `/api` prefix and appends `x-request-id` from the request context.
+All HTTP proxy integrations use `overwrite:path = "/$request.path.proxy"` to strip the path prefix and append `x-request-id` from the request context. The three service proxy routes (`/os/`, `/billing/`, `/execution/`) do not carry a host header override; the `/api/` fallback carries `overwrite:header.host` derived from `app_base_url`.
 
 ### Terraform
 

@@ -1,5 +1,8 @@
 environment               = "prod"
 app_base_url              = "https://replace-with-prod-workshop-app-hostname"
+os_base_url               = "https://replace-with-prod-os-hostname"
+billing_base_url          = "https://replace-with-prod-billing-hostname"
+execution_base_url        = "https://replace-with-prod-execution-hostname"
 db_host                   = "replace-with-prod-db-host"
 db_port                   = 5432
 db_name                   = "workshop"
