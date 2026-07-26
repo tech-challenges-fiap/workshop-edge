@@ -1,5 +1,8 @@
 environment               = "stag"
 app_base_url              = "https://replace-with-stag-workshop-app-hostname"
+os_base_url               = "https://replace-with-stag-os-hostname"
+billing_base_url          = "https://replace-with-stag-billing-hostname"
+execution_base_url        = "https://replace-with-stag-execution-hostname"
 db_host                   = "replace-with-stag-db-host"
 db_port                   = 5432
 db_name                   = "workshop"

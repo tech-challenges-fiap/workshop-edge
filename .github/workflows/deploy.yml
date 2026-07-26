@@ -85,5 +85,6 @@ jobs:
           EDGE_BASE_URL: ${{ steps.edge.outputs.base_url }}
           SMOKE_CPF: ${{ vars.SMOKE_CPF }}
           SMOKE_PROTECTED_PATH: ${{ vars.SMOKE_PROTECTED_PATH || '/api/work-orders' }}
+          SMOKE_SERVICE_PATHS: ${{ vars.SMOKE_SERVICE_PATHS || '' }}
           SMOKE_SKIP_APP_PROXY: ${{ vars.SMOKE_SKIP_APP_PROXY || 'false' }}
         run: bun run smoke:auth
