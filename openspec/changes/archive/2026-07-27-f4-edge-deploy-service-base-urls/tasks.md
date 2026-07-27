@@ -13,5 +13,5 @@
 - [x] 3.1 Run `npx --yes @fission-ai/openspec validate f4-edge-deploy-service-base-urls --strict` and confirm no validation errors. PASSED.
 - [x] 3.2 Run `terraform fmt -check -recursive` and `terraform validate` from `terraform/` and confirm no regressions. PASSED with Terraform v1.15.8 (no .tf files changed).
 - [x] 3.3 `bun run lint`, `bun test` (29 pass), `bun run build` all PASSED with Bun.
-- [ ] 3.4 Set `OS_BASE_URL`, `BILLING_BASE_URL`, `EXECUTION_BASE_URL` as GitHub Environment variables for `staging` and confirm the next `Deploy` run on `stag` passes `terraform apply`.
-- [ ] 3.5 Open a PR into `stag` referencing change id `f4-edge-deploy-service-base-urls` in the PR title and body.
+- [x] 3.4 Set `OS_BASE_URL`, `BILLING_BASE_URL`, `EXECUTION_BASE_URL` as GitHub Environment variables for `staging` and confirm the next `Deploy` run on `stag` passes `terraform apply`.
+- [x] 3.5 Open a PR into `stag` referencing change id `f4-edge-deploy-service-base-urls` in the PR title and body.
